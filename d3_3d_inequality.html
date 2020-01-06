@@ -13,7 +13,7 @@ button {
 </style>
 <button>update</button>
 <script>
-    var origin = [480, 300], scale = 20, j = 20, cubesData = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
+    var origin = [480, 300], scale = 20, j = 20, cubesData = [], yLine = [], alpha = 0, beta = 0, key = function(d){ return d.id; }, startAngle = Math.PI/6;
     var svg    = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
     var color  = d3.scaleOrdinal(d3.schemeCategory20);
     var cubesGroup = svg.append('g').attr('class', 'cubes');
@@ -29,11 +29,19 @@ button {
         .origin(origin)
         .scale(scale);
 
+    var yScale3d = d3._3d()
+        .shape('LINE_STRIP')
+        .origin(origin)
+        .rotateY( startAngle)
+        .rotateX(-startAngle)
+        .scale(scale);
+
+
     function processData(data, tt){
 
         /* --------- CUBES ---------*/
 
-        var cubes = cubesGroup.selectAll('g.cube').data(data, function(d){console.log(d.id); return d.id });
+        var cubes = cubesGroup.selectAll('g.cube').data(data[0], key);
         var ce = cubes
             .enter()
             .append('g')
@@ -54,7 +62,6 @@ button {
             .append('path')
             .attr('class', 'face')
             .attr('fill-opacity', 0.95)
-            .classed('_3d', true)
             .merge(faces)
             .transition().duration(tt)
             .attr('d', cubes3D.draw);
@@ -101,10 +108,47 @@ button {
 
         ce.selectAll('._3d').sort(d3._3d().sort);
 
+
+        /* ----------- y-Scale ----------- */
+
+        var yScale = svg.selectAll('path.yScale').data(data[1]);
+
+        yScale
+            .enter()
+            .append('path')
+            .attr('class', '_3d yScale')
+            .merge(yScale)
+            .attr('stroke', 'black')
+            .attr('stroke-width', 5)
+            .attr('d', yScale3d.draw);
+
+        yScale.exit().remove();
+
+         /* ----------- y-Scale Text ----------- */
+
+        var yText = svg.selectAll('text.yText').data(data[1][0]);
+
+        yText
+            .enter()
+            .append('text')
+            .attr('class', '_3d yText')
+            .attr('dx', '.3em')
+            .merge(yText)
+            .each(function(d){
+                d.centroid = {x: d.rotated.x, y: d.rotated.y, z: d.rotated.z};
+            })
+            .attr('x', function(d){ return d.projected.x; })
+            .attr('y', function(d){ return d.projected.y; })
+            .text(function(d){ return d[1] <= 0 ? d[1] : ''; });
+
+        yText.exit().remove();
+
+        d3.selectAll('._3d').sort(d3._3d().sort);
+
     }
 
     function init(){
-        cubesData = [];
+        cubesData = [], yLine = [];
         var cnt = 0;
         for(var z = -j; z < j; z = z + 4){
             for(var x = -j; x < j; x = x + 4){
@@ -115,7 +159,13 @@ button {
                 cubesData.push(_cube);
             }
         }
-        processData(cubes3D(cubesData), 1000);
+
+        d3.range(-1, 11, 1).forEach(function(d){ yLine.push([-j, -d, -j]); });
+
+        processData([
+            cubes3D(cubesData),
+            yScale3d([yLine])
+        ], 1000);
     }
 
     function dragStart(){
@@ -128,7 +178,10 @@ button {
         mouseY = mouseY || 0;
         beta   = (d3.event.x - mx + mouseX) * Math.PI / 230 ;
         alpha  = (d3.event.y - my + mouseY) * Math.PI / 230  * (-1);
-        processData(cubes3D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubesData), 0);
+        processData([
+            cubes3D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubesData),
+            yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([yLine]),
+        ], 0);
     }
 
     function dragEnd(){
@@ -138,14 +191,14 @@ button {
 
     function makeCube(h, x, z){
         return [
-            {x: x - 1, y: h, z: z + 1}, // FRONT TOP LEFT
-            {x: x - 1, y: 0, z: z + 1}, // FRONT BOTTOM LEFT
-            {x: x + 1, y: 0, z: z + 1}, // FRONT BOTTOM RIGHT
-            {x: x + 1, y: h, z: z + 1}, // FRONT TOP RIGHT
-            {x: x - 1, y: h, z: z - 1}, // BACK  TOP LEFT
-            {x: x - 1, y: 0, z: z - 1}, // BACK  BOTTOM LEFT
-            {x: x + 1, y: 0, z: z - 1}, // BACK  BOTTOM RIGHT
-            {x: x + 1, y: h, z: z - 1}, // BACK  TOP RIGHT
+            {x: x , y: h, z: z + 2}, // FRONT TOP LEFT
+            {x: x , y: 0, z: z + 2}, // FRONT BOTTOM LEFT
+            {x: x + 2, y: 0, z: z + 2}, // FRONT BOTTOM RIGHT
+            {x: x + 2, y: h, z: z + 2}, // FRONT TOP RIGHT
+            {x: x , y: h, z: z }, // BACK  TOP LEFT
+            {x: x , y: 0, z: z }, // BACK  BOTTOM LEFT
+            {x: x + 2, y: 0, z: z }, // BACK  BOTTOM RIGHT
+            {x: x + 2, y: h, z: z }, // BACK  TOP RIGHT
         ];
     }
 
