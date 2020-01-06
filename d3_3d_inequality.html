@@ -13,7 +13,7 @@ button {
 </style>
 <button>update</button>
 <script>
-    var origin = [480, 300], scale = 20, j = 20, cubesData = [], yLine = [], alpha = 0, beta = 0, key = function(d){ return d.id; }, startAngle = Math.PI/6;
+    var origin = [480, 300], scale = 20, j = 10, cubesData = [], yLine = [], xLine = [], zLine = [], alpha = 0, beta = 0, key = function(d){ return d.id; }, startAngle = Math.PI/6;
     var svg    = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
     var color  = d3.scaleOrdinal(d3.schemeCategory20);
     var cubesGroup = svg.append('g').attr('class', 'cubes');
@@ -36,6 +36,29 @@ button {
         .rotateX(-startAngle)
         .scale(scale);
 
+    var xScale3d = d3._3d()
+        .shape('LINE_STRIP')
+        .origin(origin)
+        .rotateX( Math.PI/2)
+        .rotateY( startAngle)
+        .rotateX(-startAngle)
+        .scale(scale);
+
+    var zScale3d = d3._3d()
+        .shape('LINE_STRIP')
+        .origin(origin)
+        .rotateX( Math.PI/2)
+        .rotateY( startAngle)
+        .rotateX(-startAngle)
+        .scale(scale);
+/*y 2 axis
+var xScale3d = d3._3d()
+    .shape('LINE_STRIP')
+    .origin(origin)
+    .rotateY( Math.PI)
+    .rotateZ( Math.PI)
+    .scale(scale);
+    */
 
     function processData(data, tt){
 
@@ -124,6 +147,36 @@ button {
 
         yScale.exit().remove();
 
+        /* ----------- x-Scale ----------- */
+
+        var xScale = svg.selectAll('path.xScale').data(data[2]);
+
+        xScale
+            .enter()
+            .append('path')
+            .attr('class', '_3d xScale')
+            .merge(xScale)
+            .attr('stroke', 'red')
+            .attr('stroke-width', 5)
+            .attr('d', xScale3d.draw);
+
+        xScale.exit().remove();
+
+        /* ----------- z-Scale ----------- */
+
+        var zScale = svg.selectAll('path.zScale').data(data[3]);
+
+        zScale
+            .enter()
+            .append('path')
+            .attr('class', '_3d zScale')
+            .merge(zScale)
+            .attr('stroke', 'blue')
+            .attr('stroke-width', 5)
+            .attr('d', zScale3d.draw);
+
+        zScale.exit().remove();
+
          /* ----------- y-Scale Text ----------- */
 
         var yText = svg.selectAll('text.yText').data(data[1][0]);
@@ -148,7 +201,7 @@ button {
     }
 
     function init(){
-        cubesData = [], yLine = [];
+        cubesData = [], yLine = [], xLine = [], zLine = [];
         var cnt = 0;
         for(var z = -j; z < j; z = z + 4){
             for(var x = -j; x < j; x = x + 4){
@@ -160,11 +213,17 @@ button {
             }
         }
 
-        d3.range(-1, 11, 1).forEach(function(d){ yLine.push([-j, -d, -j]); });
+        d3.range(-1, 11, 1).forEach(function(d){ yLine.push([-j-2, -d, -j-2]); });
+
+        d3.range(0, scale + 2, 1).forEach(function(d){ xLine.push([d-j-2, 0, -j-2]); }); //red line
+
+        d3.range(0, scale + 2 , 1).forEach(function(d){ zLine.push([-j-2, 0, d-j-2]); }); //blue line
 
         processData([
             cubes3D(cubesData),
-            yScale3d([yLine])
+            yScale3d([yLine]),
+            xScale3d([xLine]),
+            zScale3d([zLine])
         ], 1000);
     }
 
@@ -181,6 +240,8 @@ button {
         processData([
             cubes3D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubesData),
             yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([yLine]),
+            xScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([xLine]),
+            zScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([zLine]),
         ], 0);
     }
 
