@@ -102,6 +102,7 @@
 			.append('path')
 			.attr('class', 'face')
 			.attr('fill-opacity', 0.95)
+			.classed('_3d', true)
 			.merge(faces)
 			.transition().duration(tt)
 			.attr('d', cubes3D.draw);
@@ -243,7 +244,7 @@
 
 		d3.range(-1, 11, 1).forEach(function (d) {
 			yLine.push([-j - 2, -d, -j - 2]);
-		});
+		}); // black line
 
 		d3.range(0, scale + 2, 1).forEach(function (d) {
 			xLine.push([d - j - 2, 0, -j - 2]);

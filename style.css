@@ -16,16 +16,16 @@ svg {
 }
 
 ._3d.xScale {
-	stroke: purple;
+	stroke: salmon;
 }
 
 /* +y -> Ginie, -y -> Income */
 ._3d.yScale {
-	stroke: green;
+	stroke: #333;
 }
 
 ._3d.zScale {
-	stroke: salmon;
+	stroke: dodgerblue;
 }
 
 /* Demo purposes */
