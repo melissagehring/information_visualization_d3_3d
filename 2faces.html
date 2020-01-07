@@ -13,12 +13,16 @@ button {
 </style>
 <button>update</button>
 <script>
-    var origin = [480, 300], scale = 20, j = 15, cubesData = [], cubes2Data = [], yLine = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
+      // CHANGE in variables
+    var origin = [480, 300], scale = 20, j = 15, cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
     var svg    = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
     var color  = d3.scaleOrdinal(d3.schemeCategory20);
     var cubesGroup = svg.append('g').attr('class', 'cubes');
     var mx, my, mouseX, mouseY;
 
+
+    // CHANGE
+    //variable for first layer of cubes, representing the gini
     var cubes3D = d3._3d()
         .shape('CUBE')
         .x(function(d){ return d.x; })
@@ -29,6 +33,7 @@ button {
         .origin(origin)
         .scale(scale);
 
+    //variable for second layer of cubes, representing the income
     var cubes23D = d3._3d()
         .shape('CUBE')
         .x(function(d){ return d.x; })
@@ -40,6 +45,14 @@ button {
         .scale(scale);
 
     var yScale3d = d3._3d()
+        .shape('LINE_STRIP')
+        .origin(origin)
+        .rotateY( startAngle)
+        .rotateX(-startAngle)
+        .scale(scale);
+
+    //CHANGE adding y2scale
+    var y2Scale3d = d3._3d()
         .shape('LINE_STRIP')
         .origin(origin)
         .rotateY( startAngle)
@@ -61,59 +74,22 @@ button {
         .rotateY( startAngle)
         .rotateX(-startAngle)
         .scale(scale);
-/*y 2 axis
-var xScale3d = d3._3d()
-    .shape('LINE_STRIP')
-    .origin(origin)
-    .rotateY( Math.PI)
-    .rotateZ( Math.PI)
-    .scale(scale);
-    */
+
 
     function processData(data, tt){
-/*
-      //* --------- CUBES 2---------
-        var cubes2 = cubesGroup.selectAll('g.cube2').data(data[0], function(d){ return d.id; });
-        var ce2 = cubes2
-            .enter()
-            .append('g')
-            .attr('class', 'cube2')
-            .attr('id', function(d){ return d.id;} )
-            .attr('fill', function(d){ return color(d.id); })
-            .attr('stroke', function(d){ return d3.color(color(d.id)).darker(2); })
-            .merge(cubes2);
 
-        cubes2.exit().remove();
-
-
-        // --------- FACES 2---------
-        var faces2 = cubes2.merge(ce2).selectAll('path.face2').data(function(d){ return d.faces; }, function(d){ return d.face; });
-
-        faces2.enter()
-            .append('path')
-            .attr('class', ' face2 _3d')
-            .attr('fill-opacity', 1)
-            .merge(faces2)
-            .transition().duration(tt)
-            .attr('d', cubes3D.draw);
-
-        faces2.exit().remove();
-
-        ce2.selectAll('._3d').sort(d3._3d().sort);
-*/
-
-
-
-
-
+      //CHANGEs in all attr() functions
+      //--> grouping cubes and axes, axes texts together with class: _3d_cube_sort
+      //--> grouping faces, faces texts together
+      //and CHANGE in the sort() functions (selectioning using the new classes)
 
         /* --------- CUBES ---------*/
 
-        var cubes = cubesGroup.selectAll('g.cube').data(data[1], function(d){ return d.id; });
+        var cubes = cubesGroup.selectAll('g.cube').data(data[0], function(d){ return d.id; });
         var ce = cubes
             .enter()
             .append('g')
-            .attr('class', 'cube')
+            .attr('class', 'cube _3d_cube_sort')
             .attr('id', function(d){ return d.id;} )
             .attr('fill', function(d){ return color(d.id); })
             .attr('stroke', function(d){ return d3.color(color(d.id)).darker(2); })
@@ -128,7 +104,7 @@ var xScale3d = d3._3d()
 
         faces.enter()
             .append('path')
-            .attr('class', 'face _3d')
+            .attr('class', 'face _3d_face_sort')
             .attr('fill-opacity', 1)
             .merge(faces)
             .transition().duration(tt)
@@ -148,7 +124,7 @@ var xScale3d = d3._3d()
         texts
             .enter()
             .append('text')
-            .attr('class', 'text _3d')
+            .attr('class', 'text _3d_face_sort')
             .attr('dy', '-.7em')
             .attr('text-anchor', 'middle')
             .attr('font-family', 'sans-serif')
@@ -171,9 +147,41 @@ var xScale3d = d3._3d()
 
         texts.exit().remove();
 
-        /* --------- SORT TEXT & FACES 2 ---------*/
+        /* --------- SORT TEXT & FACES ---------*/
 
-        ce.selectAll('._3d').sort(d3._3d().sort);
+        ce.selectAll('._3d_face_sort').sort(d3._3d().sort);
+
+
+
+
+        //* --------- CUBES 2---------
+        var cubes2 = cubesGroup.selectAll('g.cube2').data(data[1], function(d){ return d.id; });
+        var ce2 = cubes2
+            .enter()
+            .append('g')
+            .attr('class', 'cube2 _3d_cube_sort')
+            .attr('id', function(d){ return d.id;} )
+            .attr('fill', function(d){ return color(d.id); })
+            .attr('stroke', function(d){ return d3.color(color(d.id)).darker(2); })
+            .merge(cubes2);
+
+        cubes2.exit().remove();
+
+
+        // --------- FACES 2---------
+        var faces2 = cubes2.merge(ce2).selectAll('path.face2').data(function(d){ return d.faces; }, function(d){ return d.face; });
+
+        faces2.enter()
+            .append('path')
+            .attr('class', ' face2 _3d_face_sort')
+            .attr('fill-opacity', 1)
+            .merge(faces2)
+            .transition().duration(tt)
+            .attr('d', cubes3D.draw);
+
+        faces2.exit().remove();
+
+        ce2.selectAll('._3d_face_sort').sort(d3._3d().sort);
 
 
         /* ----------- y-Scale ----------- */
@@ -183,23 +191,77 @@ var xScale3d = d3._3d()
         yScale
             .enter()
             .append('path')
-            .attr('class', '_3d yScale')
+            .attr('class', '_3d_cube_sort yScale')
             .merge(yScale)
-            .attr('stroke', 'black')
+            .attr('stroke', 'yellow')
             .attr('stroke-width', 1)
             .attr('d', yScale3d.draw);
 
         yScale.exit().remove();
 
+        //CHANGE in text of y --> positive entries
+         /* ----------- y-Scale Text ----------- */
+
+        var yText = svg.selectAll('text.yText').data(data[2][0]);
+
+        yText
+            .enter()
+            .append('text')
+            .attr('class', ' _3d_cube_sort yText')
+            .attr('dx', '.3em')
+            .merge(yText)
+            .each(function(d){
+                d.centroid = {x: d.rotated.x, y: d.rotated.y, z: d.rotated.z};
+            })
+            .attr('x', function(d){ return d.projected.x; })
+            .attr('y', function(d){ return d.projected.y; })
+            .text(function(d){ return d[1] <= -1 ? -d[1] : ''; });
+
+        yText.exit().remove();
+
+        //CHANGE adding new axis
+        /* ----------- y2-Scale ----------- */
+
+        var y2Scale = svg.selectAll('path.y2Scale').data(data[3]);
+
+        y2Scale
+            .enter()
+            .append('path')
+            .attr('class', '_3d_cube_sort y2Scale')
+            .merge(y2Scale)
+            .attr('stroke', 'green')
+            .attr('stroke-width', 1)
+            .attr('d', y2Scale3d.draw);
+
+        y2Scale.exit().remove();
+
+         /* ----------- y2-Scale Text ----------- */
+
+        var y2Text = svg.selectAll('text.y2Text').data(data[3][0]);
+
+        y2Text
+            .enter()
+            .append('text')
+            .attr('class', ' _3d_cube_sort y2Text')
+            .attr('dx', '.3em')
+            .merge(y2Text)
+            .each(function(d){
+                d.centroid = {x: d.rotated.x, y: d.rotated.y, z: d.rotated.z};
+            })
+            .attr('x', function(d){ return d.projected.x; })
+            .attr('y', function(d){ return d.projected.y; })
+            .text(function(d){ return d[1] >= 0 ? d[1] : ''; });
+
+        yText.exit().remove();
 
         /* ----------- x-Scale ----------- */
 
-        var xScale = svg.selectAll('path.xScale').data(data[3]);
+        var xScale = svg.selectAll('path.xScale').data(data[4]);
 
         xScale
             .enter()
             .append('path')
-            .attr('class', '_3d xScale')
+            .attr('class', ' _3d_cube_sort xScale')
             .merge(xScale)
             .attr('stroke', 'red')
             .attr('stroke-width', 1)
@@ -209,12 +271,12 @@ var xScale3d = d3._3d()
 
         /* ----------- z-Scale ----------- */
 
-        var zScale = svg.selectAll('path.zScale').data(data[4]);
+        var zScale = svg.selectAll('path.zScale').data(data[5]);
 
         zScale
             .enter()
             .append('path')
-            .attr('class', '_3d zScale')
+            .attr('class', ' _3d_cube_sort zScale')
             .merge(zScale)
             .attr('stroke', 'blue')
             .attr('stroke-width', 1)
@@ -222,30 +284,16 @@ var xScale3d = d3._3d()
 
         zScale.exit().remove();
 
-         /* ----------- y-Scale Text ----------- */
-
-        var yText = svg.selectAll('text.yText').data(data[2][0]);
-
-        yText
-            .enter()
-            .append('text')
-            .attr('class', '_3d yText')
-            .attr('dx', '.3em')
-            .merge(yText)
-            .each(function(d){
-                d.centroid = {x: d.rotated.x, y: d.rotated.y, z: d.rotated.z};
-            })
-            .attr('x', function(d){ return d.projected.x; })
-            .attr('y', function(d){ return d.projected.y; })
-            .text(function(d){ return d[1] <= 0 ? d[1] : ''; });
-
-        yText.exit().remove();
+        d3.selectAll('._3d_cube_sort').sort(d3._3d().sort);
 
 
     }
 
     function init(){
-        cubesData = [], cubes2Data = [], yLine = [], xLine = [], zLine = [];
+
+      //CHANGE adding new axis y2 --> defining, initializing y2Line and passing it to processData
+        cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [];
+
         var cnt = 0;
         for(var z = -j; z < j; z = z + 4){
             for(var x = -j; x < j; x = x + 4){
@@ -262,16 +310,19 @@ var xScale3d = d3._3d()
             }
         }
 
-        d3.range(-1, 11, 1).forEach(function(d){ yLine.push([-j-2, -d, -j-2]); });
+        d3.range(0, 11, 1).forEach(function(d){ yLine.push([-j-2, -d, -j-2]); }); //yellow line
+
+        d3.range(0, 11, 1).forEach(function(d){ y2Line.push([-j-2, d, -j-2]); }); //green line
 
         d3.range(0, j*2 + 2, 1).forEach(function(d){ xLine.push([d-j-2, 0, -j-2]); }); //red line
 
         d3.range(0, j*2 + 2 , 1).forEach(function(d){ zLine.push([-j-2, 0, d-j-2]); }); //blue line
 
         processData([
-            cubes23D(cubes2Data),
             cubes3D(cubesData),
+            cubes23D(cubes2Data),
             yScale3d([yLine]),
+            y2Scale3d([y2Line]),
             xScale3d([xLine]),
             zScale3d([zLine])
         ], 1000);
@@ -288,9 +339,10 @@ var xScale3d = d3._3d()
         beta   = (d3.event.x - mx + mouseX) * Math.PI / 230 ;
         alpha  = (d3.event.y - my + mouseY) * Math.PI / 230  * (-1);
         processData([
-            cubes23D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubes2Data),
             cubes3D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubesData),
+            cubes23D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubes2Data),
             yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([yLine]),
+            yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([y2Line]),
             xScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([xLine]),
             zScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([zLine]),
         ], 0);
