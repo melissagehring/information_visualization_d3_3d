@@ -71,8 +71,8 @@ var xScale3d = d3._3d()
     */
 
     function processData(data, tt){
-
-        /* --------- CUBES 2---------*/
+/*
+      //* --------- CUBES 2---------
         var cubes2 = cubesGroup.selectAll('g.cube2').data(data[0], function(d){ return d.id; });
         var ce2 = cubes2
             .enter()
@@ -86,7 +86,7 @@ var xScale3d = d3._3d()
         cubes2.exit().remove();
 
 
-        /* --------- FACES 2---------*/
+        // --------- FACES 2---------
         var faces2 = cubes2.merge(ce2).selectAll('path.face2').data(function(d){ return d.faces; }, function(d){ return d.face; });
 
         faces2.enter()
@@ -100,7 +100,7 @@ var xScale3d = d3._3d()
         faces2.exit().remove();
 
         ce2.selectAll('._3d').sort(d3._3d().sort);
-
+*/
 
 
 
@@ -191,7 +191,6 @@ var xScale3d = d3._3d()
 
         yScale.exit().remove();
 
-                d3.selectAll('_3d').sort(d3._3d().sort);
 
         /* ----------- x-Scale ----------- */
 
@@ -242,7 +241,6 @@ var xScale3d = d3._3d()
 
         yText.exit().remove();
 
-        d3.selectAll('_3d').sort(d3._3d().sort);
 
     }
 
