@@ -221,40 +221,43 @@ var xScale3d = d3._3d()
               var gini_by_country = d3.nest()
               .key(function(d){return d.country})
               .entries(data_gini);
-              var i=0;
+              var i = 0;
               var exists = false;
               var cnt_id = 0;
               //z=6 bc it get slowly if there is too nuch countries
               for(var z = 0; z < 6; z++){ //loop over countries
+
                 for(var x = 0; x < 46; x++){//loop over years from 1970 to 2016 (so 1970 + x)
+
+                  var temp = 1970+x;
+                  i = 0;
                   while( i < gini_by_country[z].values.length && exists == false){ // simple research to see if there is data upon the year x+1970
-                    var temp = 1970+x;
+
                     console.log("je suis bien dans la boucle, et je vais evaluer : " + gini_by_country[z].values[i].year + " == " + temp +" pour le pays " + gini_by_country[z].key);
                     if(gini_by_country[z].values[i].year == temp){
                       exists = true;
                     }
                     i++;
                   }
-
                     if(exists == true){ //if there is data, creation of the cube
                       exists = false;
-                      console.log("Ya des data :) pour l'année " + x);
+                      console.log("Ya des data :) pour l'année " + temp);
                       var _cube = makeCube(gini_by_country[z].values[i-1].gini_index, x*4, z*4);
-                          _cube.id = 'cube_' + cnt_id;
-                          _cube.height = gini_by_country[z].values[i-1].gini_index;
-                          cubesData.push(_cube);
+                      _cube.id = 'cube_' + cnt_id;
+                      _cube.height = gini_by_country[z].values[i-1].gini_index;
+                      cubesData.push(_cube);
                       cnt_id++;
                     }else{ // if there isn't creation of a cube with a height of 0
-                      //console.log("Ya pas de data :( pour l'année " + x);
+                      console.log("Ya pas de data :( pour l'année " + temp);
                       var _cube = makeCube(0, x*4, z*4);
-                          _cube.id = 'cube_' + cnt_id;
-                          _cube.height = 0;
-                          cubesData.push(_cube);
+                      _cube.id = 'cube_' + cnt_id;
+                      _cube.height = 0;
+                      cubesData.push(_cube);
                       cnt_id++;
                     }
                   }
                 }
-              }
+
 
 
               d3.range(-1, 11, 1).forEach(function(d){ yLine.push([-j-2, -d, -j-2]); });
@@ -269,6 +272,7 @@ var xScale3d = d3._3d()
                   xScale3d([xLine]),
                   zScale3d([zLine])
               ], 1000);
+            }
 
 
 
