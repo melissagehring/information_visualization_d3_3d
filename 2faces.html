@@ -2,7 +2,8 @@
 <meta charset="utf-8">
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://unpkg.com/d3-3d/build/d3-3d.min.js"></script>
-<body align="center">
+<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+<body align="center" style="margin-top:100px">
 <svg width="960" height="500"></svg>
 <style type="text/css">
 button {
@@ -14,12 +15,19 @@ button {
 <button>update</button>
 <script>
       // CHANGE in variables
-    var origin = [480, 300], scale = 20, j = 15, cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
+    var scale = 20, j = 15, cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
     var svg    = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
     var color  = d3.scaleOrdinal(d3.schemeCategory20);
     var cubesGroup = svg.append('g').attr('class', 'cubes');
     var mx, my, mouseX, mouseY;
+    var origin = [j*35, j*20];
 
+    $( "svg" ).css( "width", function( index ) {
+      return j * 65;
+    });
+    $( "svg" ).css( "height", function( index ) {
+      return j * 45;
+    });
 
     // CHANGE
     //variable for first layer of cubes, representing the gini
