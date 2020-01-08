@@ -15,7 +15,7 @@ button {
 <button>update</button>
 <script>
       // CHANGE in variables
-    var scale = 20, j = 15, cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
+    var scale = 20, j = 40, cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
     var svg    = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
     var color  = d3.scaleOrdinal(d3.schemeCategory20);
     var cubesGroup = svg.append('g').attr('class', 'cubes');
@@ -419,7 +419,7 @@ button {
             cubes3D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubesData),
             cubes23D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubes2Data),
             yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([yLine]),
-            yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([y2Line]),
+            y2Scale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([y2Line]),
             xScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([xLine]),
             zScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([zLine]),
         ], 0);
