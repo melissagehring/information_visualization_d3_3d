@@ -215,9 +215,18 @@ button {
             })
             .attr('x', function(d){ return d.projected.x; })
             .attr('y', function(d){ return d.projected.y; })
-            .text(function(d){ return d[1] <= -1 ? -d[1] : ''; });
+            .text(function(d){
+              var maxEl= (data[3][0][(data[3][0]).length-1][1]);
+              if(d[1] != -maxEl){
+                return d[1] <= 0 ? -d[1] : '';
+              }else{
+                return d[3];
+              }
+            });
 
         yText.exit().remove();
+
+
 
         //CHANGE adding new axis
         /* ----------- y2-Scale ----------- */
@@ -250,9 +259,16 @@ button {
             })
             .attr('x', function(d){ return d.projected.x; })
             .attr('y', function(d){ return d.projected.y; })
-            .text(function(d){ return d[1] >= 0 ? d[1] : ''; });
+            .text(function(d){
+              var maxEl= (data[3][0][(data[3][0]).length-1][1]);
+              if(d[1] != maxEl){
+                return d[1] >= 0 ? d[1] : '';
+              }else{
+                return d[3];
+              }
+            });
 
-        yText.exit().remove();
+        y2Text.exit().remove();
 
         /* ----------- x-Scale ----------- */
 
@@ -269,6 +285,33 @@ button {
 
         xScale.exit().remove();
 
+        /* ----------- x-Scale Text ----------- */
+
+       var xText = svg.selectAll('text.xText').data(data[4][0]);
+
+       xText
+           .enter()
+           .append('text')
+           .attr('class', ' _3d_cube_sort xText')
+           .attr('dx', '.3em')
+           .merge(xText)
+           .each(function(d){
+               d.centroid = {x: d.rotated.x, y: d.rotated.y, z: d.rotated.z};
+           })
+           .attr('x', function(d){ return d.projected.x; })
+           .attr('y', function(d){ return d.projected.y; })
+           .text(function(d){
+             var maxEl = (data[4][0][(data[4][0]).length-1][0]);
+             if(d[0] != maxEl){
+               return d[0];
+             }else{
+               return d[3];
+             }
+           });
+
+       xText.exit().remove();
+
+
         /* ----------- z-Scale ----------- */
 
         var zScale = svg.selectAll('path.zScale').data(data[5]);
@@ -283,6 +326,32 @@ button {
             .attr('d', zScale3d.draw);
 
         zScale.exit().remove();
+
+        /* ----------- z-Scale Text ----------- */
+
+        var zText = svg.selectAll('text.zText').data(data[5][0]);
+
+        zText
+           .enter()
+           .append('text')
+           .attr('class', ' _3d_cube_sort zText')
+           .attr('dx', '.3em')
+           .merge(zText)
+           .each(function(d){
+               d.centroid = {x: d.rotated.x, y: d.rotated.y, z: d.rotated.z};
+           })
+           .attr('x', function(d){ return d.projected.x; })
+           .attr('y', function(d){ return d.projected.y; })
+           .text(function(d){
+             var maxEl = (data[5][0][(data[5][0]).length-1][2]);
+             if(d[2] != maxEl){
+               return d[2];
+             }else{
+               return d[3];
+             }
+           });
+
+        zText.exit().remove();
 
         d3.selectAll('._3d_cube_sort').sort(d3._3d().sort);
 
@@ -310,13 +379,13 @@ button {
             }
         }
 
-        d3.range(0, 11, 1).forEach(function(d){ yLine.push([-j-2, -d, -j-2]); }); //yellow line
+        d3.range(0, 11, 1).forEach(function(d){ yLine.push([-j-2, -d, -j-2, "gini"]); }); //yellow line
 
-        d3.range(0, 11, 1).forEach(function(d){ y2Line.push([-j-2, d, -j-2]); }); //green line
+        d3.range(0, 11, 1).forEach(function(d){ y2Line.push([-j-2, d, -j-2, "income"]); }); //green line
 
-        d3.range(0, j*2 + 2, 1).forEach(function(d){ xLine.push([d-j-2, 0, -j-2]); }); //red line
+        d3.range(0, j*2 + 2, 1).forEach(function(d){ xLine.push([d-j-2, 0, -j-2, "year"]); }); //red line
 
-        d3.range(0, j*2 + 2 , 1).forEach(function(d){ zLine.push([-j-2, 0, d-j-2]); }); //blue line
+        d3.range(0, j*2 + 2 , 1).forEach(function(d){ zLine.push([-j-2, 0, d-j-2, "Country"]); }); //blue line
 
         processData([
             cubes3D(cubesData),
