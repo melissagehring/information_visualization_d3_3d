@@ -4,32 +4,41 @@
 <script src="https://unpkg.com/d3-3d/build/d3-3d.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
 <body align="center" style="margin-top:100px">
-<svg width="960" height="500"></svg>
+<svg width="1200" height="700"></svg>
+//TODO  add styles
 <style type="text/css">
-button {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-}
 </style>
-<button>update</button>
 <script>
-      // CHANGE in variables
-    var scale = 20, j = 40, cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI/6;
+d3.tsv("./data/countries.tsv", function(error, data_countries) {
+      if(error) throw error;
+  d3.tsv("./data/income_averages.tsv", function(error, data_averages) {
+    if(error) throw error;
+    d3.tsv("./data/income_gini.tsv", function(error, data_gini) {
+      if(error) throw error;
+
+    //variables for number of yeaars and countries to display
+    var nrCountries=20, nrYears=5, startYear=2000;
+    var endYear=startYear+nrYears;
+
+    // variables for data to visualize
+    var cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [];
+
+    var scale = 10, alpha = 0, beta = 0, startAngle = Math.PI/6;
     var svg    = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
     var color  = d3.scaleOrdinal(d3.schemeCategory20);
     var cubesGroup = svg.append('g').attr('class', 'cubes');
     var mx, my, mouseX, mouseY;
-    var origin = [j*35, j*20];
+
+    //formatting and positioning of the diagram
+    var origin = [50*nrYears,20*nrCountries]; //position:from left, from top
 
     $( "svg" ).css( "width", function( index ) {
-      return j * 65;
+      return nrYears * 200;
     });
     $( "svg" ).css( "height", function( index ) {
-      return j * 45;
+      return nrCountries * 100;
     });
 
-    // CHANGE
     //variable for first layer of cubes, representing the gini
     var cubes3D = d3._3d()
         .shape('CUBE')
@@ -52,6 +61,7 @@ button {
         .origin(origin)
         .scale(scale);
 
+    //variable for yscale (gini)
     var yScale3d = d3._3d()
         .shape('LINE_STRIP')
         .origin(origin)
@@ -59,7 +69,7 @@ button {
         .rotateX(-startAngle)
         .scale(scale);
 
-    //CHANGE adding y2scale
+    //variable for y2scale (income)
     var y2Scale3d = d3._3d()
         .shape('LINE_STRIP')
         .origin(origin)
@@ -67,32 +77,54 @@ button {
         .rotateX(-startAngle)
         .scale(scale);
 
+    //variable for xscale (year)
     var xScale3d = d3._3d()
         .shape('LINE_STRIP')
         .origin(origin)
         .rotateX( Math.PI/2)
         .rotateY( startAngle)
         .rotateX(-startAngle)
-        .scale(scale);
+        .scale(4*scale);
 
+    //variable for zscale (country)
     var zScale3d = d3._3d()
         .shape('LINE_STRIP')
         .origin(origin)
         .rotateX( Math.PI/2)
         .rotateY( startAngle)
         .rotateX(-startAngle)
-        .scale(scale);
+        .scale(4*scale);
 
 
     function processData(data, tt){
-
-      //CHANGEs in all attr() functions
+      //in this function the data is processed, s.t. it is visualized as either axis or cube (using the above defined variables)
+      //data comes in the form:
+      /*
+          cubes3D(cubesData), // GINI
+          cubes23D(cubes2Data), // INCOME
+          yScale3d([yLine]), // y axis for gini
+          y2Scale3d([y2Line]), // y axis for income
+          xScale3d([xLine]), // x axis for years
+          zScale3d([zLine])// x axis for countries
+      */
+      // and is saved in array data -->
+      /*
+        data[0]  // GINI
+        data[1]  // INCOME
+        data[2] // y axis for gini
+        data[3] // y axis for income
+        data[4]  // x axis for years
+        data[5] // x axis for countries
+      */
+      //for each of this data svg are created within this function
+      // for each svg object creation there is an attr() function
+      // responsible for the correct sorting of the svg objects (what is displayed when in front/ background?) by adding a class and therewith grouping
       //--> grouping cubes and axes, axes texts together with class: _3d_cube_sort
       //--> grouping faces, faces texts together
-      //and CHANGE in the sort() functions (selectioning using the new classes)
+      //these grouos are then sorted using the sort() functions (selectioning using the new classes)
 
         /* --------- CUBES ---------*/
-
+        /* --------- GINI ---------*/
         var cubes = cubesGroup.selectAll('g.cube').data(data[0], function(d){ return d.id; });
         var ce = cubes
             .enter()
@@ -107,7 +139,7 @@ button {
         cubes.exit().remove();
 
         /* --------- FACES ---------*/
-
+        /* --------- GINI ---------*/
         var faces = cubes.merge(ce).selectAll('path.face').data(function(d){ return d.faces; }, function(d){ return d.face; });
 
         faces.enter()
@@ -121,7 +153,7 @@ button {
         faces.exit().remove();
 
         /* --------- TEXT ---------*/
-
+        /* --------- GINI ---------*/
         var texts = cubes.merge(ce).selectAll('text.text').data(function(d){
             var _t = d.faces.filter(function(d){
                 return d.face === 'top';
@@ -156,13 +188,13 @@ button {
         texts.exit().remove();
 
         /* --------- SORT TEXT & FACES ---------*/
-
+        //sorting function TODO, doesn't work correctly
         ce.selectAll('._3d_face_sort').sort(d3._3d().sort);
 
 
 
-
-        //* --------- CUBES 2---------
+        /* --------- CUBES 2 ---------*/
+        /* --------- INCOME ---------*/
         var cubes2 = cubesGroup.selectAll('g.cube2').data(data[1], function(d){ return d.id; });
         var ce2 = cubes2
             .enter()
@@ -175,8 +207,8 @@ button {
 
         cubes2.exit().remove();
 
-
-        // --------- FACES 2---------
+        /* --------- FACES 2 ---------*/
+        /* --------- INCOME ---------*/
         var faces2 = cubes2.merge(ce2).selectAll('path.face2').data(function(d){ return d.faces; }, function(d){ return d.face; });
 
         faces2.enter()
@@ -189,11 +221,47 @@ button {
 
         faces2.exit().remove();
 
+        var texts2 = cubes.merge(ce).selectAll('text.text2').data(function(d){
+            var _t = d.faces.filter(function(d){
+                return d.face === 'top';
+            });
+            return [{height: d.height, centroid: _t[0].centroid}];
+        });
+
+        /* --------- TEXTS 2 ---------*/
+        /* --------- INCOME ---------*/
+        texts2
+            .enter()
+            .append('text')
+            .attr('class', 'text2 _3d_face_sort')
+            .attr('dy', '-.7em')
+            .attr('text-anchor', 'middle')
+            .attr('font-family', 'sans-serif')
+            .attr('font-weight', 'bolder')
+            .attr('x', function(d){ return origin[0] + scale * d.centroid.x })
+            .attr('y', function(d){ return origin[1] + scale * d.centroid.y })
+            .merge(texts2)
+            .transition().duration(tt)
+            .attr('fill', 'black')
+            .attr('stroke', 'none')
+            .attr('x', function(d){ return origin[0] + scale * d.centroid.x })
+            .attr('y', function(d){ return origin[1] + scale * d.centroid.y })
+            .tween('text2', function(d){
+                var that = d3.select(this);
+                var i = d3.interpolateNumber(+that.text(), Math.abs(d.height));
+                return function(t){
+                    that.text(i(t).toFixed(1));
+                };
+            });
+
+        texts2.exit().remove();
+
+        /* --------- SORT TEXT & FACES 2 ---------*/
+        // sorting function, TODO doesn't work correctly
         ce2.selectAll('._3d_face_sort').sort(d3._3d().sort);
 
 
-        /* ----------- y-Scale ----------- */
-
+        /* ----------- y-Scale GINI ----------- */
         var yScale = svg.selectAll('path.yScale').data(data[2]);
 
         yScale
@@ -207,8 +275,8 @@ button {
 
         yScale.exit().remove();
 
-        //CHANGE in text of y --> positive entries
-         /* ----------- y-Scale Text ----------- */
+        // make text of y have positive entries --> -d[1] in return statement
+         /* ----------- y-Scale Text GINI ----------- */
 
         var yText = svg.selectAll('text.yText').data(data[2][0]);
 
@@ -226,7 +294,7 @@ button {
             .text(function(d){
               var maxEl= (data[3][0][(data[3][0]).length-1][1]);
               if(d[1] != -maxEl){
-                return d[1] <= 0 ? -d[1] : '';
+                return d[1] <= 0 ? -d[1]/10 : '';
               }else{
                 return d[3];
               }
@@ -235,10 +303,7 @@ button {
         yText.exit().remove();
 
 
-
-        //CHANGE adding new axis
-        /* ----------- y2-Scale ----------- */
-
+        /* ----------- y 2-Scale INCOME----------- */
         var y2Scale = svg.selectAll('path.y2Scale').data(data[3]);
 
         y2Scale
@@ -252,8 +317,7 @@ button {
 
         y2Scale.exit().remove();
 
-         /* ----------- y2-Scale Text ----------- */
-
+          /* ----------- y 2-Scale Text INCOME----------- */ //TODO NOT WORKING
         var y2Text = svg.selectAll('text.y2Text').data(data[3][0]);
 
         y2Text
@@ -270,7 +334,7 @@ button {
             .text(function(d){
               var maxEl= (data[3][0][(data[3][0]).length-1][1]);
               if(d[1] != maxEl){
-                return d[1] >= 0 ? d[1] : '';
+                return d[1] >= 0 ? d[1]*10000 : '';
               }else{
                 return d[3];
               }
@@ -278,8 +342,8 @@ button {
 
         y2Text.exit().remove();
 
-        /* ----------- x-Scale ----------- */
 
+        /* ----------- x-Scale YEAR----------- */
         var xScale = svg.selectAll('path.xScale').data(data[4]);
 
         xScale
@@ -293,8 +357,7 @@ button {
 
         xScale.exit().remove();
 
-        /* ----------- x-Scale Text ----------- */
-
+        /* ----------- x-Scale Text YEAR----------- */
        var xText = svg.selectAll('text.xText').data(data[4][0]);
 
        xText
@@ -310,9 +373,12 @@ button {
            .attr('y', function(d){ return d.projected.y; })
            .text(function(d){
              var maxEl = (data[4][0][(data[4][0]).length-1][0]);
+             //use the maxelement to display either the year or the axis description as the last element
+             // if not max element --> year
              if(d[0] != maxEl){
-               return d[0];
+               return d[0]+startYear;
              }else{
+             // if  max element --> last element ("year") as axis description
                return d[3];
              }
            });
@@ -320,8 +386,7 @@ button {
        xText.exit().remove();
 
 
-        /* ----------- z-Scale ----------- */
-
+        /* ----------- z-Scale Countries ----------- */
         var zScale = svg.selectAll('path.zScale').data(data[5]);
 
         zScale
@@ -335,10 +400,10 @@ button {
 
         zScale.exit().remove();
 
-        /* ----------- z-Scale Text ----------- */
+        /* ----------- z-Scale TEXT COUNTRIES----------- */
+        // TODO work on textes, s.t. the correct country codes are displayed
 
         var zText = svg.selectAll('text.zText').data(data[5][0]);
-
         zText
            .enter()
            .append('text')
@@ -352,59 +417,128 @@ button {
            .attr('y', function(d){ return d.projected.y; })
            .text(function(d){
              var maxEl = (data[5][0][(data[5][0]).length-1][2]);
+             //use the maxelement to display either the countrycodes or the axis description as the last element
+             // if not max element --> countrycodes
              if(d[2] != maxEl){
-               return d[2];
+               var index = 0;
+               for (var l =0; l< zLine.length; l++){
+                  var actualEl=zLine[l][2];
+                  if(actualEl==d[2]){
+                    index=l;
+                  }
+               }
+               return data_countries[index].code; //display the country code
              }else{
+             // if  max element --> last element ("country") as axis description
                return d[3];
              }
            });
 
         zText.exit().remove();
 
+        //sorting function TODO, doesn't work correctly
         d3.selectAll('._3d_cube_sort').sort(d3._3d().sort);
-
-
     }
 
+
+
+    //in this function all data is fed into the right arrays and then passed to the processing function
     function init(){
 
-      //CHANGE adding new axis y2 --> defining, initializing y2Line and passing it to processData
-        cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [];
+      //getting the average and gini per country
+            var gini_by_country = d3.nest()
+            .key(function(d){return d.country})
+            .entries(data_gini);
 
-        var cnt = 0;
-        for(var z = -j; z < j; z = z + 4){
-            for(var x = -j; x < j; x = x + 4){
-            var h = d3.randomUniform(-2, -7)();
-            var _cube = makeCube(h, x, z);
-                _cube.id = 'cube_' + cnt++;
-                _cube.height = h;
-                cubesData.push(_cube);
-            var _cube2 = makeCube(-h,x,z);
-                _cube2.id = 'cube_down_' + cnt++;
-                _cube2.height = -h;
-                cubes2Data.push(_cube2);
+            var average_by_country = d3.nest()
+            .key(function(d){return d.country})
+            .entries(data_averages);
 
+
+
+
+            //TODO the following two 2-dim-for-loops should be made again (idea in the whatsapp message)
+            //variables for the first loop (GINI)
+            var exists = false;
+            var cnt=0;
+
+            // creating cubes for GINI and pushing them into predefined array
+            for(var actualCountry = 0; actualCountry < nrCountries; actualCountry = actualCountry + 1){ //country loop
+                for(var actualYear = startYear; actualYear <= endYear; actualYear = actualYear + 1){ //year loop
+                  var i = 0;
+                  while( i < gini_by_country[actualCountry].values.length && exists == false){
+                    if(gini_by_country[actualCountry].values[i].year == actualYear){
+                      exists = true;
+                    }
+                    i++;
+                  }
+                  if(exists == true){ //if there is data, creation of the cube
+                    exists = false;
+                    console.log("gini :) for " + actualYear);
+                    console.log( gini_by_country[actualCountry].values[i-1]);
+                    var _cube = makeCube(gini_by_country[actualCountry].values[i-1].gini_index*-10, (actualYear-startYear)*4, actualCountry*4);
+                    _cube.id = 'cube_' + cnt;
+                    _cube.height = gini_by_country[actualCountry].values[i-1].gini_index;
+                    cubesData.push(_cube);
+                    cnt++;
+                  }else{ // if there isn't data, no creation of cube
+                    cnt++;
+                  }
+                }
+              }
+
+          //variables for the second loop (INCOME)
+          var exists2 = false;
+          var cnt2=0;
+
+          // Creating cubes for INCOME and pushing them into predefined array
+          for(var actualCountry = 0; actualCountry < nrCountries; actualCountry = actualCountry + 1){ //country loop
+              for(var actualYear = startYear; actualYear <= endYear; actualYear = actualYear + 1){
+                var i = 0;
+                while( i < average_by_country[actualCountry].values.length && exists2 == false){ // simple research to see if there is data upon the year x+1970
+                  if(average_by_country[actualCountry].values[i].year == actualYear){
+                    exists2 = true;
+                  }
+                  i++;
+                }
+                if(exists2 == true){ //if there is data, creation of the cube
+                  exists2 = false;
+                  console.log("income for " + actualYear);
+                  console.log( average_by_country[actualCountry].values[i-1]);
+                  var _cube2 = makeCube(average_by_country[actualCountry].values[i-1].average/10000, (actualYear-startYear)*4, actualCountry*4);
+                  _cube2.id = 'cube_down' + cnt2;
+                  _cube2.height = -average_by_country[actualCountry].values[i-1].average;
+                  cubes2Data.push(_cube2);
+                  cnt2++;
+                }else{
+                  cnt2++;
+                }
+              }
             }
-        }
 
-        d3.range(0, 11, 1).forEach(function(d){ yLine.push([-j-2, -d, -j-2, "gini"]); }); //yellow line
 
-        d3.range(0, 11, 1).forEach(function(d){ y2Line.push([-j-2, d, -j-2, "income"]); }); //green line
+            //feeding data for axes in the predefined arrays
+            d3.range(0, 11, 2).forEach(function(d){ yLine.push([0, -d, 0, "gini"]); }); //GINI - yellow line
 
-        d3.range(0, j*2 + 2, 1).forEach(function(d){ xLine.push([d-j-2, 0, -j-2, "year"]); }); //red line
+            d3.range(0, 1011, 10).forEach(function(d){ y2Line.push([0, d, 0, "income"]); }); //INCOME - green line
 
-        d3.range(0, j*2 + 2 , 1).forEach(function(d){ zLine.push([-j-2, 0, d-j-2, "Country"]); }); //blue line
+            d3.range(startYear, (startYear+nrYears) + 2, 1).forEach(function(d){ xLine.push([d-startYear, 0, 0, "year"]); }); //YEAR- red line
 
-        processData([
-            cubes3D(cubesData),
-            cubes23D(cubes2Data),
-            yScale3d([yLine]),
-            y2Scale3d([y2Line]),
-            xScale3d([xLine]),
-            zScale3d([zLine])
-        ], 1000);
+            d3.range(0, nrCountries + 2 , 1).forEach(function(d){ zLine.push([0, 0, d, "Country"]); }); //COUNTRY - blue line
+
+            //call process data to make the diagramm
+            processData([
+                cubes3D(cubesData),
+                cubes23D(cubes2Data),
+                yScale3d([yLine]),
+                y2Scale3d([y2Line]),
+                xScale3d([xLine]),
+                zScale3d([zLine])
+            ], 1000);
     }
 
+
+//functions for reprocessing on dragging
     function dragStart(){
         mx = d3.event.x;
         my = d3.event.y;
@@ -419,7 +553,7 @@ button {
             cubes3D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubesData),
             cubes23D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubes2Data),
             yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([yLine]),
-            y2Scale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([y2Line]),
+            yScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([y2Line]),
             xScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([xLine]),
             zScale3d.rotateY(beta + startAngle).rotateX(alpha - startAngle)([zLine]),
         ], 0);
@@ -430,21 +564,24 @@ button {
         mouseY = d3.event.y - my + mouseY;
     }
 
+    //adding +2/+4/+3/+5 for right positioning and for formatting the width of the cubes
     function makeCube(h, x, z){
         return [
-            {x: x , y: h, z: z + 2}, // FRONT TOP LEFT
-            {x: x , y: 0, z: z + 2}, // FRONT BOTTOM LEFT
-            {x: x + 2, y: 0, z: z + 2}, // FRONT BOTTOM RIGHT
-            {x: x + 2, y: h, z: z + 2}, // FRONT TOP RIGHT
-            {x: x , y: h, z: z }, // BACK  TOP LEFT
-            {x: x , y: 0, z: z }, // BACK  BOTTOM LEFT
-            {x: x + 2, y: 0, z: z }, // BACK  BOTTOM RIGHT
-            {x: x + 2, y: h, z: z }, // BACK  TOP RIGHT
+            {x: x+2 , y: h, z: z + 5}, // FRONT TOP LEFT
+            {x: x+2 , y: 0, z: z + 5}, // FRONT BOTTOM LEFT
+            {x: x+4, y: 0, z: z + 5}, // FRONT BOTTOM RIGHT
+            {x: x + 4, y: h, z: z + 5}, // FRONT TOP RIGHT
+            {x: x+2 , y: h, z: z+3 }, // BACK  TOP LEFT
+            {x: x+2 , y: 0, z: z+3 }, // BACK  BOTTOM LEFT
+            {x: x + 4, y: 0, z: z+3 }, // BACK  BOTTOM RIGHT
+            {x: x + 4, y: h, z: z+3 }, // BACK  TOP RIGHT
         ];
     }
 
-    d3.selectAll('button').on('click', init);
-
+    //call init to create the visualization
     init();
+  });
+});
+});
 </script>
 </body>
