@@ -165,7 +165,7 @@
 							return color(idCountryExtract(d));
 						})
 						.attr('stroke', function (d) {
-							return d3.color(color(idCountryExtract(d))).darker(2);
+							return d3.color(color(idCountryExtract(d))).darker(1);
 						})
 						.merge(cubes)
 						.sort(cubes3D.sort);
@@ -257,10 +257,10 @@
 							return idCountryExtract(d);
 						})
 						.attr('fill', function (d) {
-							return color(idCountryExtract(d));
+							return d3.color(color(idCountryExtract(d))).brighter(0.3);
 						})
 						.attr('stroke', function (d) {
-							return d3.color(color(idCountryExtract(d))).darker(2);
+							return d3.color(color(idCountryExtract(d))).darker(0); // set as same as top cube fill
 						})
 						.merge(cubes2);
 
