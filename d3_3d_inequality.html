@@ -10,10 +10,7 @@
 <svg></svg>
 <button>update</button>
 <script>
-	var origin = [480, 300], scale = 20, j = 10, cubesData = [], yLine = [], xLine = [], zLine = [], alpha = 0, beta = 0,
-		key = function (d) {
-			return d.id;
-		}, startAngle = Math.PI / 6;
+	var origin = [480, 300], scale = 20, j = 10, cubesData = [], yLine = [], xLine = [], zLine = [], alpha = 0, beta = 0, startAngle = Math.PI / 6;
 	var svg = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
 	var color = d3.scaleOrdinal(d3.schemeCategory20);
 	var cubesGroup = svg.append('g').attr('class', 'cubes');
@@ -71,7 +68,7 @@
 
 		/* --------- CUBES ---------*/
 
-		var cubes = cubesGroup.selectAll('g.cube').data(data[0], key);
+		var cubes = cubesGroup.selectAll('g.cube').data(data[0], function(d){ return d.id });
 		var ce = cubes
 			.enter()
 			.append('g')
