@@ -24,6 +24,7 @@
 
 				// variables for data to visualize
 				var cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [];
+				var combined_data = []; // 2D array with gini and avg income values per country
 
 				var scale = 10, alpha = 0, beta = 0, startAngle = Math.PI / 6;
 				var svg = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
@@ -486,6 +487,7 @@
 					/* ----------- z-Scale TEXT COUNTRIES----------- */
 					// TODO work on textes, s.t. the correct country codes are displayed
 
+
 					var zText = svg.selectAll('text.zText').data(data[5][0]);
 					zText
 						.enter()
@@ -514,7 +516,8 @@
 										index = l;
 									}
 								}
-								return data_countries[index].code; //display the country code
+								//return data_countries[index].code; //display the country code
+								return combined_data[index][0];
 							} else {
 								// if  max element --> last element ("country") as axis description
 								return d[3];
@@ -544,67 +547,105 @@
 						})
 						.entries(data_averages);
 
-					//TODO the following two 2-dim-for-loops should be made again (idea in the whatsapp message)
-					//variables for the first loop (GINI)
-					var exists = false;
+
+
+					var offset_gini = 0;
+					var offset_income = 0;
+					var k = 0;
+
+					// Adding the data to combined_data
+					while (k<nrCountries){
+						if (gini_by_country[k+offset_gini].key == average_by_country[k+offset_income].key){ // Check if there exists both gini and income data for a country
+							var values_for_country = []; // Array with all values for certain country
+							values_for_country.push(gini_by_country[k+offset_gini].key);
+							var l = gini_by_country[k+offset_gini].values.length-1;
+							var m = average_by_country[k+offset_income].values.length-1;
+
+							var j = startYear;
+							while (j<=endYear){ // Add the available gini indices, "no_data" if not available
+								if (l >= 0){
+									if (gini_by_country[k+offset_gini].values[l].year == j){
+										values_for_country.push(gini_by_country[k+offset_gini].values[l].gini_index);
+										l--;
+										j++
+									}
+									else if (gini_by_country[k+offset_gini].values[l].year > j) {
+										values_for_country.push("no_data");
+										j++
+									}
+									else {
+										l--;
+									}
+								}
+								else {
+									values_for_country.push("no_data");
+									j++;
+								}
+							}
+
+							var j = startYear;
+							while (j<=endYear){ // Add the available average incomes, "no_data" if not available
+								if (m>=0){
+									if (average_by_country[k+offset_income].values[m].year == j){
+										values_for_country.push(average_by_country[k+offset_income].values[m].average);
+										m--;
+										j++;
+									}
+									else if (average_by_country[k+offset_income].values[m].year > j){
+										values_for_country.push("no_data");
+										j++;
+									}
+									else {
+										m--;
+									}
+								}
+								else {
+									values_for_country.push("no_data");
+									j++
+								}
+							}
+							combined_data.push(values_for_country);
+							k++;
+						}
+						else if (gini_by_country[k+offset_gini].key < average_by_country[k+offset_income].key) {
+							//console.log(gini_by_country[k+offset_gini].key + " comes before " + average_by_country[k+offset_income].key);
+							offset_gini++;
+						}
+						else{
+							//console.log(average_by_country[k+offset_income].key+ " comes before " + gini_by_country[k+offset_gini].key);
+							offset_income++;
+						}
+					}
+
+					//console.log(combined_data);
+
+					// Making the cubes
 					var cnt = 0;
-
-					// creating cubes for GINI and pushing them into predefined array
-					for (var actualCountry = 0; actualCountry < nrCountries; actualCountry = actualCountry + 1) { //country loop
-						for (var actualYear = startYear; actualYear <= endYear; actualYear = actualYear + 1) { //year loop
-							var i = 0;
-							while (i < gini_by_country[actualCountry].values.length && exists == false) {
-								if (gini_by_country[actualCountry].values[i].year == actualYear) {
-									exists = true;
-								}
-								i++;
-							}
-							if (exists == true) { //if there is data, creation of the cube
-								exists = false;
-								console.log("gini :) for " + actualYear);
-								console.log(gini_by_country[actualCountry].values[i - 1]);
-								var _cube = makeCube(gini_by_country[actualCountry].values[i - 1].gini_index * -10, (actualYear - startYear) * 4, actualCountry * 4);
-								// Add country code to id and then split before adding as id to dom, split at %
-								_cube.id = 'cube_' + cnt + `%${gini_by_country[actualCountry].key}`;
-								_cube.height = gini_by_country[actualCountry].values[i - 1].gini_index;
-								cubesData.push(_cube);
-								cnt++;
-							} else { // if there isn't data, no creation of cube
-								cnt++;
-							}
-						}
-					}
-
-					//variables for the second loop (INCOME)
-					var exists2 = false;
 					var cnt2 = 0;
-
-					// Creating cubes for INCOME and pushing them into predefined array
-					for (var actualCountry = 0; actualCountry < nrCountries; actualCountry = actualCountry + 1) { //country loop
-						for (var actualYear = startYear; actualYear <= endYear; actualYear = actualYear + 1) {
-							var i = 0;
-							while (i < average_by_country[actualCountry].values.length && exists2 == false) { // simple research to see if there is data upon the year x+1970
-								if (average_by_country[actualCountry].values[i].year == actualYear) {
-									exists2 = true;
+					for (var country=0;country<combined_data.length;country++){
+						for (var value = 1;value<combined_data[country].length;value++){
+							// gini cubes
+							if (value <= nrYears+1){
+								if (combined_data[country][value] != "no_data"){
+								var _cube = makeCube(combined_data[country][value] * -10, (value-1)*4, (country-1) * 4);
+								_cube.id = 'cube_' + cnt + '%' + combined_data[country][0];
+								_cube.height = combined_data[country][value];
+								cubesData.push(_cube);
 								}
-								i++;
+								cnt++;
 							}
-							if (exists2 == true) { //if there is data, creation of the cube
-								exists2 = false;
-								console.log("income for " + actualYear);
-								console.log(average_by_country[actualCountry].values[i - 1]);
-								var _cube2 = makeCube(average_by_country[actualCountry].values[i - 1].average / 10000, (actualYear - startYear) * 4, actualCountry * 4);
-								// Add country code to id and then split before adding as id to dom, split at %
-								_cube2.id = 'cube_down' + cnt2 + `%${gini_by_country[actualCountry].key}`;
-								_cube2.height = -average_by_country[actualCountry].values[i - 1].average;
-								cubes2Data.push(_cube2);
-								cnt2++;
-							} else {
+							// average income cubes
+							else {
+								if (combined_data[country][value] != "no_data"){
+									var _cube = makeCube(combined_data[country][value] / 10000, (value-nrYears-2)*4, (country-1) * 4);
+									_cube.id = 'cube_' + cnt2 + '%' + combined_data[country][0];
+									_cube.height = combined_data[country][value];
+									cubesData.push(_cube);
+								}
 								cnt2++;
 							}
 						}
 					}
-
 
 					//feeding data for axes in the predefined arrays
 					d3.range(0, 11, 2).forEach(function (d) {
@@ -619,7 +660,7 @@
 						xLine.push([d - startYear, 0, 0, "year"]);
 					}); //YEAR- red line
 
-					d3.range(0, nrCountries + 2, 1).forEach(function (d) {
+					d3.range(0, nrCountries, 1).forEach(function (d) {
 						zLine.push([0, 0, d, "Country"]);
 					}); //COUNTRY - blue line
 
