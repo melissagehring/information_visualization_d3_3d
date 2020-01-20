@@ -17,7 +17,6 @@
 			if (error) throw error;
 			d3.tsv("./data/income_gini.tsv", function (error, data_gini) {
 				if (error) throw error;
-
 				//variables for number of yeaars and countries to display
 				var nrCountries = 20, nrYears = 5, startYear = 2000;
 				var endYear = startYear + nrYears;
@@ -25,11 +24,13 @@
 				// variables for data to visualize
 				var cubesData = [], cubes2Data = [], yLine = [], y2Line = [], xLine = [], zLine = [];
 				var combined_data = []; // 2D array with gini and avg income values per country
+				var incomeCountryObject = {}; // Object sorted by country for the square chart
 
 				var scale = 10, alpha = 0, beta = 0, startAngle = Math.PI / 6;
 				var svg = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
 				var color = d3.scaleOrdinal(d3.schemeCategory20);
 				var cubesGroup = svg.append('g').attr('class', 'cubes');
+				var treeMap = svg.append('g').attr('class', 'treemap');
 				var mx, my, mouseX, mouseY;
 
 				//formatting and positioning of the diagram
@@ -169,7 +170,10 @@
 							return d3.color(color(idCountryExtract(d))).darker(1);
 						})
 						.merge(cubes)
-						.sort(cubes3D.sort);
+						.sort(cubes3D.sort)
+						.on('click', function(d){
+							createTreeMap(idCountryExtract(d));
+						});
 
 					cubes.exit().remove();
 
@@ -615,9 +619,31 @@
 							//console.log(average_by_country[k+offset_income].key+ " comes before " + gini_by_country[k+offset_gini].key);
 							offset_income++;
 						}
+
+
+						//load the separate country income files						
+						for (var country=0; country<combined_data.length; country++){	
+							d3.tsv("./data/income/"+combined_data[country][0]+".tsv", function (error, specific_country_data) {
+								if (error) throw error;
+
+								//loop through all the files
+								specific_country_data.forEach(obj => {
+									if(obj.year >= 2000 && obj.year <= 2005){
+
+										if(!(obj.country in incomeCountryObject)) {
+											incomeCountryObject[obj.country] = new Array();
+											incomeCountryObject[obj.country].push(obj);
+										} else {
+											//if the country is already in the newly created object only non-duplicates should be added
+											const found = incomeCountryObject[obj.country].find(elem => elem.high == obj.high);
+											if(found == undefined) incomeCountryObject[obj.country].push(obj);
+										}	
+									} 									
+								})
+							})
+						}
 					}
 
-					//console.log(combined_data);
 
 					// Making the cubes
 					var cnt = 0;
@@ -714,6 +740,41 @@
 						{x: x + 4, y: 0, z: z + 3}, // BACK  BOTTOM RIGHT
 						{x: x + 4, y: h, z: z + 3}, // BACK  TOP RIGHT
 					];
+				}
+
+
+				function createTreeMap(clickedCountry){
+
+
+					let share50 = 0, share75 = 0, share100 = 0, sumOfShare25 = 0, sumOfShare50 = 0, sumOfShare75 = 0, sumOfShare100 = 0;
+
+					if(incomeCountryObject[clickedCountry] !== undefined){
+						incomeCountryObject[clickedCountry].forEach(elem => {
+
+							if(parseFloat(elem.high) <= 0.25000){
+								sumOfShare25 += parseFloat(elem.share);
+							} else if(parseFloat(elem.high) > 0.25000 && parseFloat(elem.high) <= 0.50000){
+								share50 += parseFloat(elem.share);
+							} else if(parseFloat(elem.high) > 0.50000 && parseFloat(elem.high) <= 0.75000){
+								share75 += parseFloat(elem.share);
+							} 
+							else if(parseFloat(elem.high) > 0.75000 && parseFloat(elem.high) <= 1){
+								share100 += parseFloat(elem.share);
+							} 
+						})
+					} 
+					sumOfShare50 = sumOfShare25 + share50;
+					sumOfShare75 = sumOfShare50 + share75;
+					sumOfShare100 = sumOfShare75 + share100;
+
+					let treeMapObject = {
+						"children": [
+							{"name": "0-25%", "value": sumOfShare25},
+							{"name": "25-50%", "value": sumOfShare50},
+							{"name": "50-75%", "value": sumOfShare75},
+							{"name": "75-100%", "value": sumOfShare100}
+						]					
+					};
 				}
 
 				//call init to create the visualization
