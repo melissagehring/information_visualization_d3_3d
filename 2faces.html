@@ -5,10 +5,15 @@
 	<script src="https://d3js.org/d3.v4.min.js"></script>
 	<script src="https://unpkg.com/d3-3d/build/d3-3d.min.js"></script>
 	<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 	<!-- Css assets -->
 	<link type="text/css" rel="stylesheet" href="./style.css">
 </head>
 <body>
+<div class="intro-container">
+	<h1>Information Visualization</h1>
+	<h2>Exploring the world’s inequality data</h2>
+</div>
 <svg></svg>
 <script>
 	d3.tsv("./data/countries.tsv", function (error, data_countries) {
@@ -17,8 +22,8 @@
 			if (error) throw error;
 			d3.tsv("./data/income_gini.tsv", function (error, data_gini) {
 				if (error) throw error;
-				//variables for number of yeaars and countries to display
-				var nrCountries = 20, nrYears = 5, startYear = 2000;
+				//variables for number of years and countries to display
+				var nrCountries = 10, nrYears = 5, startYear = 2000;
 				var endYear = startYear + nrYears;
 
 				// variables for data to visualize
@@ -26,7 +31,7 @@
 				var combined_data = []; // 2D array with gini and avg income values per country
 				var incomeCountryObject = {}; // Object sorted by country for the square chart
 
-				var scale = 10, alpha = 0, beta = 0, startAngle = Math.PI / 6;
+				var scale = 10, alpha = 0, beta = 0, startAngle = Math.PI / 5;
 				var svg = d3.select('svg').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
 				var color = d3.scaleOrdinal(d3.schemeCategory20);
 				var cubesGroup = svg.append('g').attr('class', 'cubes');
@@ -35,16 +40,6 @@
 
 				//formatting and positioning of the diagram
 				var origin = [50 * nrYears, 20 * nrCountries]; //position:from left, from top
-
-				/* // Controlled by css, 100vh, 100vw
-				$("svg").css("width", function (index) {
-					return nrYears * 200;
-				});
-				// Height might be useful though
-				$("svg").css("height", function (index) {
-					return nrCountries * 100;
-				});
-				*/
 
 				//variable for first layer of cubes, representing the gini
 				var cubes3D = d3._3d()
@@ -100,7 +95,7 @@
 				var xScale3d = d3._3d()
 					.shape('LINE_STRIP')
 					.origin(origin)
-					.rotateX(Math.PI / 2)
+					.rotateX(Math.PI / 4)
 					.rotateY(startAngle)
 					.rotateX(-startAngle)
 					.scale(4 * scale);
@@ -144,6 +139,7 @@
 
 					const idExtract = d => d.id.split('%')[0];
 					const idCountryExtract = d => d.id.split('%')[1];
+					const color = d3.scaleOrdinal().domain(data).range(d3.schemeSet3);
 
 					/* --------- CUBES ---------*/
 					/* --------- GINI ---------*/
@@ -171,7 +167,7 @@
 						})
 						.merge(cubes)
 						.sort(cubes3D.sort)
-						.on('click', function(d){
+						.on('click', function (d) {
 							createTreeMap(idCountryExtract(d));
 						});
 
@@ -239,15 +235,13 @@
 					texts.exit().remove();
 
 					/* --------- SORT TEXT & FACES ---------*/
-					//sorting function TODO, doesn't work correctly
 					ce.selectAll('._3d_face_sort').sort(d3._3d().sort);
 
 
 					/* --------- CUBES 2 ---------*/
 					/* --------- INCOME ---------*/
 					var cubes2 = cubesGroup.selectAll('g.cube2').data(data[1], function (d) {
-						// From henrik: Not sure what this id is used for,
-						// if you need to use the actual id that is in the dom,
+						// From henrik: if you need to use the actual id that is in the dom,
 						// then just use idExtract() around it and you get the correct id
 						return d.id;
 					});
@@ -262,7 +256,7 @@
 							return idCountryExtract(d);
 						})
 						.attr('fill', function (d) {
-							return d3.color(color(idCountryExtract(d))).brighter(0.3);
+							return d3.color(color(idCountryExtract(d))).brighter(0.5);
 						})
 						.attr('stroke', function (d) {
 							return d3.color(color(idCountryExtract(d))).darker(0); // set as same as top cube fill
@@ -333,7 +327,6 @@
 					texts2.exit().remove();
 
 					/* --------- SORT TEXT & FACES 2 ---------*/
-					// sorting function, TODO doesn't work correctly
 					ce2.selectAll('._3d_face_sort').sort(d3._3d().sort);
 
 
@@ -397,7 +390,7 @@
 
 					y2Scale.exit().remove();
 
-					/* ----------- y 2-Scale Text INCOME----------- */ //TODO NOT WORKING
+					/* ----------- y 2-Scale Text INCOME----------- */
 					var y2Text = svg.selectAll('text.y2Text').data(data[3][0]);
 
 					y2Text
@@ -489,8 +482,6 @@
 					zScale.exit().remove();
 
 					/* ----------- z-Scale TEXT COUNTRIES----------- */
-					// TODO work on textes, s.t. the correct country codes are displayed
-
 
 					var zText = svg.selectAll('text.zText').data(data[5][0]);
 					zText
@@ -530,7 +521,6 @@
 
 					zText.exit().remove();
 
-					//sorting function TODO, doesn't work correctly
 					d3.selectAll('._3d_cube_sort').sort(d3._3d().sort);
 				}
 
@@ -552,93 +542,84 @@
 						.entries(data_averages);
 
 
-
 					var offset_gini = 0;
 					var offset_income = 0;
 					var k = 0;
 
 					// Adding the data to combined_data
-					while (k<nrCountries){
-						if (gini_by_country[k+offset_gini].key == average_by_country[k+offset_income].key){ // Check if there exists both gini and income data for a country
+					while (k < nrCountries) {
+						if (gini_by_country[k + offset_gini].key == average_by_country[k + offset_income].key) { // Check if there exists both gini and income data for a country
 							var values_for_country = []; // Array with all values for certain country
-							values_for_country.push(gini_by_country[k+offset_gini].key);
-							var l = gini_by_country[k+offset_gini].values.length-1;
-							var m = average_by_country[k+offset_income].values.length-1;
+							values_for_country.push(gini_by_country[k + offset_gini].key);
+							var l = gini_by_country[k + offset_gini].values.length - 1;
+							var m = average_by_country[k + offset_income].values.length - 1;
 
 							var j = startYear;
-							while (j<=endYear){ // Add the available gini indices, "no_data" if not available
-								if (l >= 0){
-									if (gini_by_country[k+offset_gini].values[l].year == j){
-										values_for_country.push(gini_by_country[k+offset_gini].values[l].gini_index);
+							while (j <= endYear) { // Add the available gini indices, "no_data" if not available
+								if (l >= 0) {
+									if (gini_by_country[k + offset_gini].values[l].year == j) {
+										values_for_country.push(gini_by_country[k + offset_gini].values[l].gini_index);
 										l--;
 										j++
-									}
-									else if (gini_by_country[k+offset_gini].values[l].year > j) {
+									} else if (gini_by_country[k + offset_gini].values[l].year > j) {
 										values_for_country.push("no_data");
 										j++
-									}
-									else {
+									} else {
 										l--;
 									}
-								}
-								else {
+								} else {
 									values_for_country.push("no_data");
 									j++;
 								}
 							}
 
 							var j = startYear;
-							while (j<=endYear){ // Add the available average incomes, "no_data" if not available
-								if (m>=0){
-									if (average_by_country[k+offset_income].values[m].year == j){
-										values_for_country.push(average_by_country[k+offset_income].values[m].average);
+							while (j <= endYear) { // Add the available average incomes, "no_data" if not available
+								if (m >= 0) {
+									if (average_by_country[k + offset_income].values[m].year == j) {
+										values_for_country.push(average_by_country[k + offset_income].values[m].average);
 										m--;
 										j++;
-									}
-									else if (average_by_country[k+offset_income].values[m].year > j){
+									} else if (average_by_country[k + offset_income].values[m].year > j) {
 										values_for_country.push("no_data");
 										j++;
-									}
-									else {
+									} else {
 										m--;
 									}
-								}
-								else {
+								} else {
 									values_for_country.push("no_data");
 									j++
 								}
 							}
 							combined_data.push(values_for_country);
 							k++;
-						}
-						else if (gini_by_country[k+offset_gini].key < average_by_country[k+offset_income].key) {
+						} else if (gini_by_country[k + offset_gini].key < average_by_country[k + offset_income].key) {
 							//console.log(gini_by_country[k+offset_gini].key + " comes before " + average_by_country[k+offset_income].key);
 							offset_gini++;
-						}
-						else{
+						} else {
 							//console.log(average_by_country[k+offset_income].key+ " comes before " + gini_by_country[k+offset_gini].key);
 							offset_income++;
 						}
 
 
 						//load the separate country income files						
-						for (var country=0; country<combined_data.length; country++){	
-							d3.tsv("./data/income/"+combined_data[country][0]+".tsv", function (error, specific_country_data) {
+						for (var country = 0; country < combined_data.length; country++) {
+							d3.tsv("./data/income/" + combined_data[country][0] + ".tsv", function (error, specific_country_data) {
 								if (error) throw error;
 
 								//loop through all the files
 								specific_country_data.forEach(obj => {
-									if(obj.year >= 2000 && obj.year <= 2005){
+									if (obj.year >= 2000 && obj.year <= 2005) {
 
-										if(!(obj.country in incomeCountryObject)) {
+										if (!(obj.country in incomeCountryObject)) {
 											incomeCountryObject[obj.country] = new Array();
 											incomeCountryObject[obj.country].push(obj);
 										} else {
 											//if the country is already in the newly created object only non-duplicates should be added
 											const found = incomeCountryObject[obj.country].find(elem => elem.high == obj.high);
-											if(found == undefined) incomeCountryObject[obj.country].push(obj);
-										}	
-									} 									
+											if (found == undefined) incomeCountryObject[obj.country].push(obj);
+										}
+									}
 								})
 							})
 						}
@@ -648,22 +629,22 @@
 					// Making the cubes
 					var cnt = 0;
 					var cnt2 = 0;
-					for (var country=0;country<combined_data.length;country++){
-						for (var value = 1;value<combined_data[country].length;value++){
+					for (var country = 0; country < combined_data.length; country++) {
+						for (var value = 1; value < combined_data[country].length; value++) {
 							// gini cubes
-							if (value <= nrYears+1){
-								if (combined_data[country][value] != "no_data"){
-								var _cube = makeCube(combined_data[country][value] * -10, (value-1)*4, (country-1) * 4);
-								_cube.id = 'cube_' + cnt + '%' + combined_data[country][0];
-								_cube.height = combined_data[country][value];
-								cubesData.push(_cube);
+							if (value <= nrYears + 1) {
+								if (combined_data[country][value] != "no_data") {
+									var _cube = makeCube(combined_data[country][value] * -10, (value - 1) * 4, (country - 1) * 4);
+									_cube.id = 'cube_' + cnt + '%' + combined_data[country][0];
+									_cube.height = combined_data[country][value];
+									cubesData.push(_cube);
 								}
 								cnt++;
 							}
 							// average income cubes
 							else {
-								if (combined_data[country][value] != "no_data"){
-									var _cube = makeCube(combined_data[country][value] / 10000, (value-nrYears-2)*4, (country-1) * 4);
+								if (combined_data[country][value] != "no_data") {
+									var _cube = makeCube(combined_data[country][value] / 10000, (value - nrYears - 2) * 4, (country - 1) * 4);
 									_cube.id = 'cube_' + cnt2 + '%' + combined_data[country][0];
 									_cube.height = combined_data[country][value];
 									cubesData.push(_cube);
@@ -743,26 +724,26 @@
 				}
 
 
-				function createTreeMap(clickedCountry){
+				function createTreeMap(clickedCountry) {
 
 
-					let share50 = 0, share75 = 0, share100 = 0, sumOfShare25 = 0, sumOfShare50 = 0, sumOfShare75 = 0, sumOfShare100 = 0;
+					let share50 = 0, share75 = 0, share100 = 0, sumOfShare25 = 0, sumOfShare50 = 0, sumOfShare75 = 0,
+						sumOfShare100 = 0;
 
-					if(incomeCountryObject[clickedCountry] !== undefined){
+					if (incomeCountryObject[clickedCountry] !== undefined) {
 						incomeCountryObject[clickedCountry].forEach(elem => {
 
-							if(parseFloat(elem.high) <= 0.25000){
+							if (parseFloat(elem.high) <= 0.25000) {
 								sumOfShare25 += parseFloat(elem.share);
-							} else if(parseFloat(elem.high) > 0.25000 && parseFloat(elem.high) <= 0.50000){
+							} else if (parseFloat(elem.high) > 0.25000 && parseFloat(elem.high) <= 0.50000) {
 								share50 += parseFloat(elem.share);
-							} else if(parseFloat(elem.high) > 0.50000 && parseFloat(elem.high) <= 0.75000){
+							} else if (parseFloat(elem.high) > 0.50000 && parseFloat(elem.high) <= 0.75000) {
 								share75 += parseFloat(elem.share);
-							} 
-							else if(parseFloat(elem.high) > 0.75000 && parseFloat(elem.high) <= 1){
+							} else if (parseFloat(elem.high) > 0.75000 && parseFloat(elem.high) <= 1) {
 								share100 += parseFloat(elem.share);
-							} 
+							}
 						})
-					} 
+					}
 					sumOfShare50 = sumOfShare25 + share50;
 					sumOfShare75 = sumOfShare50 + share75;
 					sumOfShare100 = sumOfShare75 + share100;
@@ -773,7 +754,7 @@
 							{"name": "25-50%", "value": sumOfShare50},
 							{"name": "50-75%", "value": sumOfShare75},
 							{"name": "75-100%", "value": sumOfShare100}
-						]					
+						]
 					};
 				}
 
